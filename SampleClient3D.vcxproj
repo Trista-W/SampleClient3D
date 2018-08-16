@@ -168,6 +168,11 @@
   <ItemGroup>
     <ClInclude Include="GLPrint.h" />
     <ClInclude Include="MarkerPositionCollection.h" />
+    <ClInclude Include="NatNetCAPI.h" />
+    <ClInclude Include="NatNetClient.h" />
+    <ClInclude Include="NatNetRepeater.h" />
+    <ClInclude Include="NatNetRequests.h" />
+    <ClInclude Include="NatNetTypes.h" />
     <ClInclude Include="NATUtils.h" />
     <ClInclude Include="OpenGlDrawingFunctions.h" />
     <ClInclude Include="Resource.h" />
@@ -175,6 +180,16 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SampleClient3D.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NatNetLib.dll" />
+    <None Include="NatNetML.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="NatNetLib.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="NatNetML.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
