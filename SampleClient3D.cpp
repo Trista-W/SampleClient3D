@@ -28,6 +28,13 @@
 
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <GL\freeglut.h>
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "stb_image.h"
 
 //NatNet SDK
 #include "NatNetTypes.h"
@@ -138,6 +145,129 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassEx(&wcex);
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////
+//Load texture
+GLuint texGround;
+#define BMP_Header_Length 54  
+static GLfloat angle = 0.0f;
+
+int power_of_two(int n)
+{
+	if (n <= 0)
+		return 0;
+	return (n & (n - 1)) == 0;
+}
+GLuint load_texture(const char* file_name)
+{
+	GLint width, height, total_bytes;
+	GLubyte* pixels = 0;
+	GLuint last_texture_ID = 0, texture_ID = 0;
+	FILE *pFile;
+
+	// If loading fails, return 
+	pFile = fopen(file_name, "rb");
+	if (pFile == 0)
+		return 0;
+
+	// Read the length and width of the image
+	fseek(pFile, 0x0012, SEEK_SET);
+	fread(&width, 4, 1, pFile);
+	fread(&height, 4, 1, pFile);
+	fseek(pFile, BMP_Header_Length, SEEK_SET);
+
+	
+	{
+		GLint line_bytes = width * 3;
+		while (line_bytes % 4 != 0)
+			++line_bytes;
+		total_bytes = line_bytes * height;
+	}
+
+	
+	pixels = (GLubyte*)malloc(total_bytes);
+	if (pixels == 0)
+	{
+		fclose(pFile);
+		return 0;
+	}
+
+	// Read pixel information
+	if (fread(pixels, total_bytes, 1, pFile) <= 0)
+	{
+		free(pixels);
+		fclose(pFile);
+		return 0;
+	}
+
+	// 对就旧版本的兼容，如果图象的宽度和高度不是的整数次方，则需要进行缩放
+	// 若图像宽高超过了OpenGL规定的最大值，也缩放
+	{
+		GLint max;
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max);
+		if (!power_of_two(width)
+			|| !power_of_two(height)
+			|| width > max
+			|| height > max)
+		{
+			const GLint new_width = 256;
+			const GLint new_height = 256; // 规定缩放后新的大小为边长的正方形
+			GLint new_line_bytes, new_total_bytes;
+			GLubyte* new_pixels = 0;
+
+			// 计算每行需要的字节数和总字节数
+			new_line_bytes = new_width * 3;
+			while (new_line_bytes % 4 != 0)
+				++new_line_bytes;
+			new_total_bytes = new_line_bytes * new_height;
+
+			// 分配内存
+			new_pixels = (GLubyte*)malloc(new_total_bytes);
+			if (new_pixels == 0)
+			{
+				free(pixels);
+				fclose(pFile);
+				return 0;
+			}
+
+			// 进行像素缩放
+			gluScaleImage(GL_RGB,
+				width, height, GL_UNSIGNED_BYTE, pixels,
+				new_width, new_height, GL_UNSIGNED_BYTE, new_pixels);
+
+			// 释放原来的像素数据，把pixels指向新的像素数据，并重新设置width和height
+			free(pixels);
+			pixels = new_pixels;
+			width = new_width;
+			height = new_height;
+		}
+	}
+
+	// 分配一个新的纹理编号
+	glGenTextures(1, &texture_ID);
+	if (texture_ID == 0)
+	{
+		free(pixels);
+		fclose(pFile);
+		return 0;
+	}
+	GLint lastTextureID = last_texture_ID;
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &lastTextureID);
+	glBindTexture(GL_TEXTURE_2D, texture_ID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
+		GL_BGR_EXT, GL_UNSIGNED_BYTE, pixels);
+	glBindTexture(GL_TEXTURE_2D, lastTextureID);  
+	free(pixels);
+	return texture_ID;
+}
+/////////////////////////////////////////////////////////////////////////////////////
+
+
 // WinMain
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR lpCmdLine, int nCmdShow)
@@ -208,6 +338,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);   // Enable the depth buffer for depth test
+	glEnable(GL_TEXTURE_2D);
+	texGround = load_texture("D:\\Program Files (x86)\\Github\\SampleClient3D\\SampleClient3D\\Texture.bmp");
 
     // Set the device context for our OpenGL printer object.
     glPrinter.SetDeviceContext(hDC);
@@ -388,6 +520,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+
+
+
+
+
 // Update OGL window
 void Update(HWND hwnd)
 {
@@ -498,7 +635,22 @@ void RenderOGLScene()
     glVertex3f(0, 0, 300);
     glEnd();
 
-    // Draw grid
+
+	//////////////////// Set the ground image ///////////////////////////////////////////////
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texGround);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-8.0f, -8.0f, 0.0f);
+	glTexCoord2f(0.0f, 3.0f); glVertex3f(-8.0f, 8.0f, 0.0f);
+	glTexCoord2f(3.0f, 3.0f); glVertex3f(8.0f, 8.0f, 0.0f);
+	glTexCoord2f(3.0f, 0.0f); glVertex3f(8.0f, -8.0f, 0.0f);
+	glEnd();
+	/*glutSwapBuffers();*/
+	//////////////////////////////////////////////////////////////////////////////////////////
+
+
+     //Draw grid
     glLineWidth(1.0f);
     OpenGLDrawingFunctions::DrawGrid();
 

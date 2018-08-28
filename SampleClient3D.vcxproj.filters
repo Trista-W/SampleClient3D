@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="GLPrint.cpp" />
+    <ClCompile Include="MarkerPositionCollection.cpp" />
+    <ClCompile Include="NATUtils.cpp" />
+    <ClCompile Include="OpenGlDrawingFunctions.cpp" />
+    <ClCompile Include="RigidBodyCollection.cpp" />
+    <ClCompile Include="SampleClient3D.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GLPrint.h" />
+    <ClInclude Include="MarkerPositionCollection.h" />
+    <ClInclude Include="NatNetCAPI.h" />
+    <ClInclude Include="NatNetClient.h" />
+    <ClInclude Include="NatNetRepeater.h" />
+    <ClInclude Include="NatNetRequests.h" />
+    <ClInclude Include="NatNetTypes.h" />
+    <ClInclude Include="NATUtils.h" />
+    <ClInclude Include="OpenGlDrawingFunctions.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="RigidBodyCollection.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="NatNetLib.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SampleClient3D.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="NatNetML.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NatNetLib.dll" />
+    <None Include="NatNetML.dll" />
+  </ItemGroup>
+</Project>
